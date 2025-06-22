@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cine-Scope - Movie Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .star-rating {
+            display: inline-flex;
+            gap: 2px;
+        }
+        .star {
+            cursor: pointer;
+            color: #d1d5db;
+            transition: color 0.2s;
+        }
+        .star.active {
+            color: #fbbf24;
+        }
+        .star:hover {
+            color: #fbbf24;
+        }
+        .movie-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .movie-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-backdrop {
+            backdrop-filter: blur(4px);
+        }
+        .hamburger-line {
+            transition: all 0.3s ease;
+        }
+        .hamburger-active .hamburger-line:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+        .hamburger-active .hamburger-line:nth-child(2) {
+            opacity: 0;
+        }
+        .hamburger-active .hamburger-line:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -6px);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-gray-800 shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-yellow-400 cursor-pointer" onclick="showPage('home')">
+                        <i class="fas fa-film mr-2"></i>Cine-Scope
+                    </h1>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#" onclick="showPage('home')" class="nav-link text-gray-300 hover:text-yellow-400 transition-colors">Home</a>
+                    <a href="#" onclick="showPage('trending')" class="nav-link text-gray-300 hover:text-yellow-400 transition-colors">Trending</a>
+                    <a href="#" onclick="showPage('discover')" class="nav-link text-gray-300 hover:text-yellow-400 transition-colors">Discover</a>
+                    <a href="#" onclick="showPage('watchlist')" class="nav-link text-gray-300 hover:text-yellow-400 transition-colors">Watchlist</a>
+                    <a href="#" onclick="showPage('ratings')" class="nav-link text-gray-300 hover:text-yellow-400 transition-colors">Ratings</a>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="hidden md:flex items-center">
+                    <div class="relative">
+                        <input type="text" id="searchInput" placeholder="Search movies..." 
+                               class="bg-gray-700 text-white px-4 py-2 rounded-lg w-64 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                        <i class="fas fa-search absolute right-3 top-3 text-gray-400"></i>
+                        <div id="searchResults" class="absolute top-full left-0 w-full bg-gray-800 rounded-lg shadow-lg mt-1 max-h-96 overflow-y-auto hidden z-50"></div>
+                    </div>
+                </div>
+
+                <!-- User Menu -->
+                <div class="hidden md:flex items-center space-x-4">
+                   
+                    <button id="logoutBtn" onclick="logout()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button id="mobileMenuBtn" class="text-gray-300 hover:text-yellow-400 focus:outline-none">
+                        <div class="w-6 h-6 flex flex-col justify-center items-center">
+                            <span class="hamburger-line block w-6 h-0.5 bg-current mb-1"></span>
+                            <span class="hamburger-line block w-6 h-0.5 bg-current mb-1"></span>
+                            <span class="hamburger-line block w-6 h-0.5 bg-current"></span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation -->
+        <div id="mobileMenu" class="md:hidden bg-gray-800 border-t border-gray-700 hidden">
+            <div class="px-4 py-2 space-y-2">
+                <!-- Mobile Search -->
+                <div class="relative mb-4">
+                    <input type="text" id="mobileSearchInput" placeholder="Search movies..." 
+                           class="bg-gray-700 text-white px-4 py-2 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                    <i class="fas fa-search absolute right-3 top-3 text-gray-400"></i>
+                    <div id="mobileSearchResults" class="absolute top-full left-0 w-full bg-gray-800 rounded-lg shadow-lg mt-1 max-h-96 overflow-y-auto hidden z-50"></div>
+                </div>
+                
+                <a href="#" onclick="showPage('home')" class="block text-gray-300 hover:text-yellow-400 py-2 transition-colors">Home</a>
+                <a href="#" onclick="showPage('trending')" class="block text-gray-300 hover:text-yellow-400 py-2 transition-colors">Trending</a>
+                <a href="#" onclick="showPage('discover')" class="block text-gray-300 hover:text-yellow-400 py-2 transition-colors">Discover</a>
+                <a href="#" onclick="showPage('watchlist')" class="block text-gray-300 hover:text-yellow-400 py-2 transition-colors">Watchlist</a>
+                <a href="#" onclick="showPage('ratings')" class="block text-gray-300 hover:text-yellow-400 py-2 transition-colors">Ratings</a>
+                <div class="border-t border-gray-700 pt-2 mt-2">
+                    <span id="mobileUserGreeting" class="block text-gray-300 py-2"></span>
+                    <button id="mobileLogoutBtn" onclick="logout()" class="w-full text-left text-red-400 hover:text-red-300 py-2 transition-colors">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-16">
+        <!-- Landing Page -->
+        <div id="landingPage" class="page">
+            <div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+                <div class="text-center px-4">
+                    <div class="mb-8">
+                        <i class="fas fa-film text-8xl text-yellow-400 mb-4"></i>
+                        <h1 class="text-6xl font-bold mb-4 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+                            Cine-Scope
+                        </h1>
+                        <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+                            Discover, explore, and track your favorite movies. Your personal cinema companion awaits.
+                        </p>
+                    </div>
+                    
+                    <div class="space-y-4 sm:space-y-0 sm:space-x-4 sm:flex sm:justify-center">
+                        <button onclick="showPage('login')" class="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold px-8 py-3 rounded-lg transition-colors w-full sm:w-auto">
+                            Get Started
+                        </button>
+                        <button onclick="showPage('signup')" class="border border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black font-semibold px-8 py-3 rounded-lg transition-colors w-full sm:w-auto">
+                            Sign Up
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Page -->
+        <div id="loginPage" class="page hidden">
+            <div class="min-h-screen flex items-center justify-center px-4">
+                <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-md">
+                    <div class="text-center mb-8">
+                        <i class="fas fa-film text-4xl text-yellow-400 mb-4"></i>
+                        <h2 class="text-3xl font-bold">Welcome Back</h2>
+                        <p class="text-gray-400 mt-2">Sign in to your Cine-Scope account</p>
+                    </div>
+                    
+                    <form id="loginForm" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Email</label>
+                            <input type="email" id="loginEmail" required 
+                                   class="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Password</label>
+                            <input type="password" id="loginPassword" required 
+                                   class="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-3 rounded-lg transition-colors">
+                            Sign In
+                        </button>
+                    </form>
+                    
+                    <div class="mt-6 text-center space-y-2">
+                        <a href="#" onclick="showPage('passwordReset')" class="text-yellow-400 hover:text-yellow-300 text-sm">
+                            Forgot your password?
+                        </a>
+                        <p class="text-gray-400 text-sm">
+                            Don't have an account? 
+                            <a href="#" onclick="showPage('signup')" class="text-yellow-400 hover:text-yellow-300">Sign up</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signup Page -->
+        <div id="signupPage" class="page hidden">
+            <div class="min-h-screen flex items-center justify-center px-4">
+                <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-md">
+                    <div class="text-center mb-8">
+                        <i class="fas fa-film text-4xl text-yellow-400 mb-4"></i>
+                        <h2 class="text-3xl font-bold">Join Cine-Scope</h2>
+                        <p class="text-gray-400 mt-2">Create your movie exploration account</p>
+                    </div>
+                    
+                    <form id="signupForm" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Full Name</label>
+                            <input type="text" id="signupName" required 
+                                   class="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Email</label>
+                            <input type="email" id="signupEmail" required 
+                                   class="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Password</label>
+                            <input type="password" id="signupPassword" required 
+                                   class="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Confirm Password</label>
+                            <input type="password" id="signupConfirmPassword" required 
+                                   class="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-3 rounded-lg transition-colors">
+                            Create Account
+                        </button>
+                    </form>
+                    
+                    <div class="mt-6 text-center">
+                        <p class="text-gray-400 text-sm">
+                            Already have an account? 
+                            <a href="#" onclick="showPage('login')" class="text-yellow-400 hover:text-yellow-300">Sign in</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Password Reset Page -->
+        <div id="passwordResetPage" class="page hidden">
+            <div class="min-h-screen flex items-center justify-center px-4">
+                <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-md">
+                    <div class="text-center mb-8">
+                        <i class="fas fa-key text-4xl text-yellow-400 mb-4"></i>
+                        <h2 class="text-3xl font-bold">Reset Password</h2>
+                        <p class="text-gray-400 mt-2">Enter your email to reset your password</p>
+                    </div>
+                    
+                    <form id="passwordResetForm" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Email</label>
+                            <input type="email" id="resetEmail" required 
+                                   class="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-3 rounded-lg transition-colors">
+                            Send Reset Link
+                        </button>
+                    </form>
+                    
+                    <div class="mt-6 text-center">
+                        <a href="#" onclick="showPage('login')" class="text-yellow-400 hover:text-yellow-300 text-sm">
+                            Back to Sign In
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Home Page -->
+        <div id="homePage" class="page hidden">
+            <div class="container mx-auto px-4 py-8">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold mb-4">Welcome to Cine-Scope</h2>
+                    <p class="text-gray-400">Discover amazing movies and build your personal collection</p>
+                </div>
+                
+                <!-- Featured Movies -->
+                <section class="mb-12">
+                    <h3 class="text-2xl font-bold mb-6">Popular Movies</h3>
+                    <div id="popularMovies" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                        <!-- Movies will be loaded here -->
+                    </div>
+                </section>
+                
+                <!-- Top Rated Movies -->
+                <section>
+                    <h3 class="text-2xl font-bold mb-6">Top Rated</h3>
+                    <div id="topRatedMovies" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                        <!-- Movies will be loaded here -->
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Trending Page -->
+        <div id="trendingPage" class="page hidden">
+            <div class="container mx-auto px-4 py-8">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold mb-4">Trending Movies</h2>
+                    <p class="text-gray-400">What's hot right now</p>
+                </div>
+                
+                <div id="trendingMovies" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 mb-8">
+                    <!-- Movies will be loaded here -->
+                </div>
+                
+                <!-- Pagination -->
+                <div id="trendingPagination" class="flex justify-center items-center space-x-4">
+                    <!-- Pagination will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Discover Page -->
+        <div id="discoverPage" class="page hidden">
+            <div class="container mx-auto px-4 py-8">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold mb-4">Discover Movies</h2>
+                    <p class="text-gray-400">Find movies by genre, year, and rating</p>
+                </div>
+                
+                <!-- Filters -->
+                <div class="bg-gray-800 p-6 rounded-lg mb-8">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Genre</label>
+                            <select id="genreFilter" class="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                                <option value="">All Genres</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Year</label>
+                            <select id="yearFilter" class="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                                <option value="">All Years</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Sort By</label>
+                            <select id="sortFilter" class="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400">
+                                <option value="popularity.desc">Popularity (High to Low)</option>
+                                <option value="popularity.asc">Popularity (Low to High)</option>
+                                <option value="vote_average.desc">Rating (High to Low)</option>
+                                <option value="vote_average.asc">Rating (Low to High)</option>
+                                <option value="release_date.desc">Release Date (Newest)</option>
+                                <option value="release_date.asc">Release Date (Oldest)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex items-end">
+                            <button onclick="applyFilters()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-2 px-4 rounded-lg transition-colors">
+                                Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="discoverMovies" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 mb-8">
+                    <!-- Movies will be loaded here -->
+                </div>
+                
+                <!-- Pagination -->
+                <div id="discoverPagination" class="flex justify-center items-center space-x-4">
+                    <!-- Pagination will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Watchlist Page -->
+        <div id="watchlistPage" class="page hidden">
+            <div class="container mx-auto px-4 py-8">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold mb-4">My Watchlist</h2>
+                    <p class="text-gray-400">Movies you want to watch</p>
+                </div>
+                
+                <div id="watchlistMovies" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                    <!-- Watchlist movies will be loaded here -->
+                </div>
+                
+                <div id="emptyWatchlist" class="text-center py-16 hidden">
+                    <i class="fas fa-bookmark text-6xl text-gray-600 mb-4"></i>
+                    <h3 class="text-2xl font-bold text-gray-400 mb-2">Your watchlist is empty</h3>
+                    <p class="text-gray-500 mb-6">Start adding movies you want to watch</p>
+                    <button onclick="showPage('discover')" class="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold px-6 py-3 rounded-lg transition-colors">
+                        Discover Movies
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ratings Page -->
+        <div id="ratingsPage" class="page hidden">
+            <div class="container mx-auto px-4 py-8">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold mb-4">My Ratings</h2>
+                    <p class="text-gray-400">Movies you've rated</p>
+                </div>
+                
+                <div id="ratedMovies" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Rated movies will be loaded here -->
+                </div>
+                
+                <div id="emptyRatings" class="text-center py-16 hidden">
+                    <i class="fas fa-star text-6xl text-gray-600 mb-4"></i>
+                    <h3 class="text-2xl font-bold text-gray-400 mb-2">No ratings yet</h3>
+                    <p class="text-gray-500 mb-6">Start rating movies to see them here</p>
+                    <button onclick="showPage('home')" class="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold px-6 py-3 rounded-lg transition-colors">
+                        Browse Movies
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Movie Details Modal -->
+    <div id="movieModal" class="fixed inset-0 bg-black bg-opacity-75 modal-backdrop flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-gray-800 rounded-lg max-w-4xl w-full max-h-screen overflow-y-auto">
+            <div id="movieModalContent">
+                <!-- Movie details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 p-6 rounded-lg text-center">
+            <i class="fas fa-spinner fa-spin text-4xl text-yellow-400 mb-4"></i>
+            <p class="text-white">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="fixed top-20 right-4 z-50 space-y-2">
+        <!-- Toast notifications will appear here -->
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
