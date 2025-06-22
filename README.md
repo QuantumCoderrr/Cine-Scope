@@ -25,12 +25,6 @@ Cine-Scope is a responsive, frontend-only movie explorer app that lets users sea
 
 ---
 
-## 🖼️ Screenshots
-
-> Coming soon — add UI preview once hosted.
-
----
-
 ## 📦 Installation
 
 1. Clone the repo:
@@ -41,10 +35,6 @@ cd Cine-Scope
 ```
 
 2. Just open the index.html file in your browser — no backend needed!
-
-## 🌐 Live Demo
-
-🚧 Not deployed yet — will update after GitHub Pages or Vercel deployment.
 
 ## 🧠 How It Works
 
@@ -95,9 +85,9 @@ A: It's already in full dark mode, because light mode is for the weak 😎
 
 ## 🤝 Contributing
 
-Pull requests are welcome! If you want to improve Cine-Scope or add features, feel free to fork and PR.
+Pull requests are welcome!  
+Please check out the [CONTRIBUTING.md](./CONTRIBUTING.md) file for guidelines, local setup, and what you can work on.
 
----
 
 ## 🧑‍💻 Author
 
